@@ -1,0 +1,7 @@
+@SAFC.Expense.Api_HostAddress = http://localhost:5188
+
+### Health check
+GET {{SAFC.Expense.Api_HostAddress}}/api/health
+Accept: application/json
+
+###

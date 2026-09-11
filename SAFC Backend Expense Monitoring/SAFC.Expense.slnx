@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SAFC.Expense.Api/SAFC.Expense.Api.csproj" />
+    <Project Path="src/SAFC.Expense.Application/SAFC.Expense.Application.csproj" />
+    <Project Path="src/SAFC.Expense.Domain/SAFC.Expense.Domain.csproj" />
+    <Project Path="src/SAFC.Expense.Infrastructure/SAFC.Expense.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SAFC.Expense.Tests/SAFC.Expense.Tests.csproj" />
+  </Folder>
+</Solution>
