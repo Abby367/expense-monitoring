@@ -1,6 +1,11 @@
 using Microsoft.OpenApi.Models;
+using SAFC.Expense.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+DotNetEnv.Env.Load();
+builder.Configuration.AddEnvironmentVariables();
+
+builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
 
