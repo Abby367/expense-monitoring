@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SAFC.Expense.Application.Common.Interfaces;
+using SAFC.Expense.Infrastructure.Authentication;
 using SAFC.Expense.Infrastructure.Persistence;
 
 namespace SAFC.Expense.Infrastructure;
@@ -12,13 +13,22 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        string connectionString = configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' not found. "
+        + "Set ConnectionStrings__DefaultConnection in src/SAFC.Expense.Api/.env");
+
 
         services.AddDbContext<ExpenseDbContext>(options =>
             options.UseNpgsql(connectionString));
 
         services.AddScoped<IExpenseDbContext>(sp =>
             sp.GetRequiredService<ExpenseDbContext>());
+            
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+
+        services.AddSingleton<ITemporaryPasswordGenerator, TemporaryPasswordGenerator>();
+
 
         return services;
     }

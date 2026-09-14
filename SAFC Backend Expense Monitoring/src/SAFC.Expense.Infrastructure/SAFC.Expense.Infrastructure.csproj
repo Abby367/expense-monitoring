@@ -7,6 +7,11 @@
   <ItemGroup>
     <ProjectReference Include="..\SAFC.Expense.Application\SAFC.Expense.Application.csproj" />
   </ItemGroup>
+  <ItemGroup>
+  <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+    <_Parameter1>SAFC.Expense.Tests</_Parameter1>
+  </AssemblyAttribute>
+</ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
