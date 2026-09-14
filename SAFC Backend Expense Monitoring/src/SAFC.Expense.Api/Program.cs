@@ -1,13 +1,17 @@
 using Microsoft.OpenApi.Models;
 using SAFC.Expense.Infrastructure;
-
+using SAFC.Expense.Application;
+using SAFC.Expense.Api.Middlewares;
 var builder = WebApplication.CreateBuilder(args);
 DotNetEnv.Env.Load();
 builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddInfrastructure(builder.Configuration);
-
+builder.Services.AddApplication();
 builder.Services.AddControllers();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -31,6 +35,9 @@ if (app.Environment.IsDevelopment())
         options.DocumentTitle = "SAFC Expense Monitoring API";
     });
 }
+
+
+app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 

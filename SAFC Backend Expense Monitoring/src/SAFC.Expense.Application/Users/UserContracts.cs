@@ -2,11 +2,6 @@ using SAFC.Expense.Domain.Enums;
 
 namespace SAFC.Expense.Application.Users;
 
-public sealed record CreateUserRequest(
-    string Email,
-    string FullName,
-    AuthMethod AuthMethod,
-    Guid? RoleId = null);
 
 
 public sealed record RoleGrantResponse(Guid RoleId, string RoleName);
