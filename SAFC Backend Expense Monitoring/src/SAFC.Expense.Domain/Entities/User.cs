@@ -22,7 +22,9 @@ public sealed class User
     public DateTimeOffset? UpdatedAt { get; private set; }
     public Guid? RemovedById { get; private set; }
     public DateTimeOffset? RemovedAt { get; private set; }
+    public bool IsRemoved => RemovedAt is not null;
     public string? RemovedReason { get; private set; }
+
     public static readonly TimeSpan TemporaryPasswordValidity = TimeSpan.FromHours(48);
     public AuthMethod AuthMethod { get; private set; }
     public string? MicrosoftId { get; private set; }
@@ -30,6 +32,8 @@ public sealed class User
 
     public const int EmailMaxLength = 256;
     public const int FullNameMaxLength = 200;
+    public const int RemovedReasonMaxLength = 500;
+
     public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 
     private User() { }
@@ -59,8 +63,8 @@ public sealed class User
         CreatedAt = now;
     }
 
-        public static User CreateByAdminWithPassword(string email, string fullName,
-        string temporaryPasswordHash, Guid? createdByUserId, DateTimeOffset now)
+    public static User CreateByAdminWithPassword(string email, string fullName,
+    string temporaryPasswordHash, Guid? createdByUserId, DateTimeOffset now)
     {
         var user = new User(email, fullName, AuthMethod.Password, createdByUserId, now);
         user.SetTemporaryPassword(temporaryPasswordHash, now);
@@ -73,8 +77,9 @@ public sealed class User
 
 
 
-        public void ResetPassword(string temporaryPasswordHash, DateTimeOffset now)
+    public void ResetPassword(string temporaryPasswordHash, DateTimeOffset now)
     {
+        EnsureNotRemoved();
         if (AuthMethod != AuthMethod.Password)
         {
             throw new InvalidOperationException(
@@ -87,9 +92,10 @@ public sealed class User
 
     public void ChangePassword(string newPasswordHash, DateTimeOffset now)
     {
+        EnsureNotRemoved();
         if (AuthMethod != AuthMethod.Password)
-        throw new InvalidOperationException(
-        "This account signs in with Microsoft and has no password.");
+            throw new InvalidOperationException(
+            "This account signs in with Microsoft and has no password.");
         PasswordHash = newPasswordHash;
         MustChangePassword = false;
         TemporaryPasswordExpiresAt = null;
@@ -98,18 +104,23 @@ public sealed class User
 
     public void Activate(DateTimeOffset now)
     {
+        EnsureNotRemoved();
+
         Status = UserStatus.Active;
         Touch(now);
     }
 
     public void Suspend(DateTimeOffset now)
     {
+        EnsureNotRemoved();
+
         Status = UserStatus.Suspended;
         Touch(now);
     }
 
     public void MarkInviteEmailSent(DateTimeOffset sentAt)
     {
+        EnsureNotRemoved();
         InviteEmailSentAt = sentAt;
         Touch(sentAt);
     }
@@ -120,15 +131,33 @@ public sealed class User
         TemporaryPasswordExpiresAt = now + TemporaryPasswordValidity;
     }
     public void Remove(Guid removedByUserId, string reason, DateTimeOffset now)
-{
-    Status = UserStatus.Removed;
-    RemovedAt = now;
-    RemovedById = removedByUserId;
-    RemovedReason = reason;
-    Touch(now);
-}
+    {
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        if (removedByUserId == Guid.Empty)
+            throw new ArgumentException("The user who removed this account cannot be empty.", nameof(removedByUserId));
+
+
+        var trimmedReason = reason.Trim();
+
+        if (trimmedReason.Length > RemovedReasonMaxLength)
+            throw new ArgumentException(
+                $"Removed reason cannot exceed {RemovedReasonMaxLength} characters.", nameof(reason));
+
+        EnsureNotRemoved();
+        RemovedAt = now;
+        RemovedById = removedByUserId;
+        RemovedReason = trimmedReason;
+        Touch(now);
+    }
+    private void EnsureNotRemoved()
+    {
+        if (IsRemoved)
+            throw new InvalidOperationException("This user has been removed.");
+    }
 
 
     private void Touch(DateTimeOffset now) => UpdatedAt = now;
+
 
 }

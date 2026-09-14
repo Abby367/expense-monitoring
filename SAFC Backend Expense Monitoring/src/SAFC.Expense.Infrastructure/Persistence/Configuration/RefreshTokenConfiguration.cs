@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SAFC.Expense.Domain.Entities;
 
 namespace SAFC.Expense.Infrastructure.Persistence.Configuration;
+
 internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 {
     public void Configure(EntityTypeBuilder<RefreshToken> builder)
@@ -31,5 +32,5 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
             .IsUnique();
 
         builder.HasIndex(r => r.UserId);
-        }
     }
+}
