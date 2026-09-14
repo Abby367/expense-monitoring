@@ -7,7 +7,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-          builder.ToTable("Users");
+        builder.ToTable("Users");
 
         builder.HasKey(u => u.Id);
 
@@ -29,15 +29,16 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(100);
 
         builder.Property(u => u.RemovedReason)
-            .HasMaxLength(500);
+            .HasMaxLength(User.RemovedReasonMaxLength);
 
         builder.HasIndex(u => u.Email)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("\"RemovedAt\" IS NULL");
 
         builder.HasIndex(u => u.MicrosoftId)
             .IsUnique()
             .HasFilter("\"MicrosoftId\" IS NOT NULL");
 
         builder.HasQueryFilter(u => u.RemovedAt == null);
-}
+    }
 }
