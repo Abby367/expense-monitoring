@@ -2,7 +2,7 @@ using FluentValidation;
 using SAFC.Expense.Application.Common.Interfaces;
 using SAFC.Expense.Domain.Entities;
 using SAFC.Expense.Domain.Enums;
-using SAFC.Expense.Application.Users.CreateUser;
+
 
 namespace SAFC.Expense.Application.Users.CreateUser;
 
@@ -10,7 +10,8 @@ public sealed class CreateUserHandler(
     IExpenseDbContext context,
     IPasswordHasher passwordHasher,
     ITemporaryPasswordGenerator passwordGenerator,
-    IValidator<CreateUserCommand> validator)
+    IValidator<CreateUserCommand> validator,
+    ICurrentUser currentUser)
 {
     public async Task<CreateUserResponse> Handle(
         CreateUserCommand command, CancellationToken cancellationToken)
@@ -33,7 +34,7 @@ public sealed class CreateUserHandler(
                 command.Email,
                 command.FullName,
                 passwordHash,
-                createdByUserId: null, // TODO: the signed-in admin, once auth exists
+                createdByUserId: currentUser.UserId,
                 now);
         }
         else
@@ -41,7 +42,7 @@ public sealed class CreateUserHandler(
             user = User.CreateByAdminWithMicrosoft(
                 command.Email,
                 command.FullName,
-                createdByUserId: null,
+                createdByUserId: currentUser.UserId,
                 now);
         }
 
