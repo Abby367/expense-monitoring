@@ -10,6 +10,9 @@ public sealed class ExpenseDbContext(DbContextOptions<ExpenseDbContext> options)
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+    public DbSet<Branch> Branches => Set<Branch>();
+
+
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

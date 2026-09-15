@@ -37,7 +37,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasIndex(u => u.MicrosoftId)
             .IsUnique()
-            .HasFilter("\"MicrosoftId\" IS NOT NULL");
+            .HasFilter("\"MicrosoftId\" IS NOT NULL AND \"RemovedAt\" IS NULL");
 
         builder.HasQueryFilter(u => u.RemovedAt == null);
     }
