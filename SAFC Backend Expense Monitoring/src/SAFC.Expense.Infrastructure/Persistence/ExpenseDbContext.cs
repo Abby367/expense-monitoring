@@ -11,6 +11,8 @@ public sealed class ExpenseDbContext(DbContextOptions<ExpenseDbContext> options)
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     public DbSet<Branch> Branches => Set<Branch>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Permission> Permissions => Set<Permission>();
 
 
 
