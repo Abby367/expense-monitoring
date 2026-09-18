@@ -12,7 +12,7 @@ using SAFC.Expense.Infrastructure.Persistence;
 namespace SAFC.Expense.Infrastructure.Migrations
 {
     [DbContext(typeof(ExpenseDbContext))]
-    [Migration("20260918082049_AddRolesAndPermissions")]
+    [Migration("20260918083230_AddRolesAndPermissions")]
     partial class AddRolesAndPermissions
     {
         /// <inheritdoc />
@@ -142,9 +142,6 @@ namespace SAFC.Expense.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
-
-                    b.Property<Guid?>("GrantedById")
-                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsSystem")
                         .HasColumnType("boolean");

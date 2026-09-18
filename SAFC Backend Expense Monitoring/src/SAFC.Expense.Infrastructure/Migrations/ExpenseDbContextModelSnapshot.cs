@@ -140,9 +140,6 @@ namespace SAFC.Expense.Infrastructure.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
-                    b.Property<Guid?>("GrantedById")
-                        .HasColumnType("uuid");
-
                     b.Property<bool>("IsSystem")
                         .HasColumnType("boolean");
 
