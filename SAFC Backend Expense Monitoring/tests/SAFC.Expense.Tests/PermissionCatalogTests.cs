@@ -39,6 +39,16 @@ public class PermissionCatalogTests
         foreach (var entry in PermissionCatalog.All)
             Assert.Equal(Permission.NormalizeKey(entry.Key), entry.Key);
     }
+    [Fact]
+    public void All_Text_Is_Trimmed()
+    {
+        foreach (var entry in PermissionCatalog.All)
+        {
+            Assert.Equal(entry.DisplayName.Trim(), entry.DisplayName);
+            Assert.Equal(entry.Description.Trim(), entry.Description);
+            Assert.Equal(entry.Module.Trim(), entry.Module);
+        }
+    }
 
     [Fact]
     public void All_Keys_Start_With_Their_Module()
