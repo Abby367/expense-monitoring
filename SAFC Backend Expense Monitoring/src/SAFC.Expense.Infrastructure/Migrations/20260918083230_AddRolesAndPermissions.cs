@@ -38,8 +38,7 @@ namespace SAFC.Expense.Infrastructure.Migrations
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     RemovedById = table.Column<Guid>(type: "uuid", nullable: true),
                     RemovedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    RemovedReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    GrantedById = table.Column<Guid>(type: "uuid", nullable: true)
+                    RemovedReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {

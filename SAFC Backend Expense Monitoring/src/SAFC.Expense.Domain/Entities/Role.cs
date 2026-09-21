@@ -21,7 +21,6 @@ public sealed class Role
     public const int CodeMaxLength = 50;
     public const int DescriptionMaxLength = 300;
     public const int RemovedReasonMaxLength = 500;
-    public Guid? GrantedById { get; private set; }
 
     public static string NormalizeCode(string code) => code.Trim().ToUpperInvariant();
     private Role() { }
@@ -101,7 +100,8 @@ public sealed class Role
 
         var desired = permissionIds.ToHashSet();
         if (desired.Contains(Guid.Empty))
-            throw new ArgumentException("...", nameof(permissionIds));
+            throw new ArgumentException("Permission ids cannot contain an empty Guid.", nameof(permissionIds));
+
 
         _rolePermissions.RemoveAll(rp => !desired.Contains(rp.PermissionId));
 
