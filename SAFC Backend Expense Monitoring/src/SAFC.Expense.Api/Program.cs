@@ -2,12 +2,15 @@ using Microsoft.OpenApi.Models;
 using SAFC.Expense.Infrastructure;
 using SAFC.Expense.Application;
 using SAFC.Expense.Api.Middlewares;
+using SAFC.Expense.Api.Options;
 var builder = WebApplication.CreateBuilder(args);
 DotNetEnv.Env.Load();
 builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
+builder.Services.Configure<UtilitiesOptions>(
+builder.Configuration.GetSection(UtilitiesOptions.SectionName));
 builder.Services.AddControllers();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();

@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using SAFC.Expense.Application.Users.CreateUser;
+using SAFC.Expense.Application.Utilities.SeedDefaults;
 
 namespace SAFC.Expense.Application;
 
@@ -12,6 +13,8 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         
         services.AddScoped<CreateUserHandler>();
+        services.AddScoped<SeedDefaultsHandler>();
+
 
         return services;
 
