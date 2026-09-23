@@ -40,5 +40,10 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasFilter("\"MicrosoftId\" IS NOT NULL AND \"RemovedAt\" IS NULL");
 
         builder.HasQueryFilter(u => u.RemovedAt == null);
+
+                builder.HasMany(u => u.UserRoles)
+            .WithOne()
+            .HasForeignKey(ur => ur.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
