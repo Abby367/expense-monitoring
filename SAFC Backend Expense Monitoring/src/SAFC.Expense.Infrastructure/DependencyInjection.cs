@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using SAFC.Expense.Application.Common.Interfaces;
 using SAFC.Expense.Infrastructure.Authentication;
 using SAFC.Expense.Infrastructure.Identity;
@@ -33,6 +35,20 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         
         services.AddScoped<ICurrentUser, CurrentUser>();
+                services.AddMemoryCache();
+
+        services.Configure<AuthorizationCacheOptions>(
+            configuration.GetSection(AuthorizationCacheOptions.SectionName));
+
+
+        services.AddScoped<UserAuthorizationProvider>();
+
+        services.AddScoped<IUserAuthorizationProvider>(sp =>
+            new CachedUserAuthorizationProvider(
+                sp.GetRequiredService<UserAuthorizationProvider>(),
+                sp.GetRequiredService<IMemoryCache>(),
+                sp.GetRequiredService<IOptions<AuthorizationCacheOptions>>()));
+
 
 
         return services;
