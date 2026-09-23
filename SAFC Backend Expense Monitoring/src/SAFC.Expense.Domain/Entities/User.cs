@@ -29,6 +29,8 @@ public sealed class User
     public AuthMethod AuthMethod { get; private set; }
     public string? MicrosoftId { get; private set; }
     public DateTimeOffset? FirstLoggedInAt { get; private set; }
+    private readonly List<UserRole> _userRoles = [];
+    public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
 
     public const int EmailMaxLength = 256;
     public const int FullNameMaxLength = 200;
@@ -155,6 +157,34 @@ public sealed class User
         if (IsRemoved)
             throw new InvalidOperationException("This user has been removed.");
     }
+
+    public UserRole Grant(Guid roleId, Guid? branchId, Guid? grantedByUserId, DateTimeOffset now)
+    {
+        EnsureNotRemoved();
+
+        
+        var alreadyHeld = _userRoles.Any(grant =>
+            !grant.IsRemoved && grant.RoleId == roleId && grant.BranchId == branchId);
+
+        if (alreadyHeld)
+            throw new InvalidOperationException("This user already holds that role at that scope.");
+
+        var granted = new UserRole(Id, roleId, branchId, grantedByUserId, now);
+        _userRoles.Add(granted);
+
+        return granted;
+    }
+
+    public void RevokeGrant(Guid grantId, Guid removedByUserId, string reason, DateTimeOffset now)
+    {
+        EnsureNotRemoved();
+
+        var grant = _userRoles.SingleOrDefault(g => g.Id == grantId)
+            ?? throw new InvalidOperationException("That grant does not belong to this user.");
+
+        grant.Remove(removedByUserId, reason, now);
+    }
+
 
 
     private void Touch(DateTimeOffset now) => UpdatedAt = now;
