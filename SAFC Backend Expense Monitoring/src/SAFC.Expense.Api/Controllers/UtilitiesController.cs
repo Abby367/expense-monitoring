@@ -24,15 +24,30 @@ public sealed class UtilitiesController(
 
         if (refusal is not null)
             return refusal;
+        
+        var response = await handler.Handle(
+            new SeedDefaultsCommand(request.Apply, utilitiesOptions.Value.SuperAdminEmail),
+            cancellationToken);
 
-        var response = await handler.Handle(new SeedDefaultsCommand(request.Apply), cancellationToken);
 
         if (response.Applied)
+        {
             logger.LogInformation(
                 "Seed applied: {PermissionsCreated} permissions created, {PermissionsUpdated} updated, {BranchesCreated} branches created, {BranchesUpdated} updated. Keys: {Keys}. Codes: {Codes}.",
                 response.Permissions.Created.Count, response.Permissions.Updated.Count,
                 response.Branches.Created.Count, response.Branches.Updated.Count,
                 response.Permissions.Created, response.Branches.Created);
+
+            // The only audit trail for a privilege grant: GrantedById is null on the row, so the
+            // database records no actor. Warning, not Information, because an applied seed run
+            // that touches the SUPERADMIN grant is worth seeing even when the outcome is a refusal.
+            logger.LogWarning(
+                "Seed grant for {Email}: {Outcome}. Caller {RemoteIp}.",
+                response.SuperAdminGrant.Email,
+                response.SuperAdminGrant.Outcome,
+                HttpContext.Connection.RemoteIpAddress);
+        }
+
         else
             logger.LogDebug("Seed preview requested.");
 
