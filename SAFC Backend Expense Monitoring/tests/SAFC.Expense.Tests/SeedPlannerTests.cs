@@ -24,6 +24,7 @@ public class SeedPlannerTests
     // and Domain grants InternalsVisibleTo to nobody. The Permission objects passed here must be
     // the same instances handed to PlanRoles as existingPermissions, or keyById cannot resolve
     // their ids back to keys and every grant looks absent.
+
     private static Role SystemRole(
         string code, string name, string description, params Permission[] grants)
     {
@@ -413,4 +414,94 @@ public class SeedPlannerTests
         Assert.Equal("ZZZ", Assert.Single(plan.Orphaned));
         Assert.Equal("MKT", Assert.Single(plan.ToCreate).Code);
     }
+    
+    // ---------------- PlanGrant ----------------
+
+    private const string GranteeEmail = "admin@safc.com.ph";
+
+    private static User Grantee() =>
+        User.CreateByAdminWithMicrosoft(GranteeEmail, "Admin", null, Now);
+
+
+
+    [Fact]
+    public void Unavailable_SuperAdmin_Role_Is_Never_Granted()
+    {
+        var user = Grantee();
+        var superAdmin = SystemRole(RoleCodes.SuperAdmin, "Super Admin", "Everything.");
+
+        var plan = SeedPlanner.PlanGrant(
+            GranteeEmail, user, superAdmin, superAdminUnavailable: true);
+
+        Assert.Equal(GrantOutcome.RoleUnavailable, plan.Outcome);
+        Assert.Null(plan.ToCreate);
+        Assert.Empty(user.UserRoles);
+    }
+
+    [Fact]
+    public void Live_Org_Wide_Grant_Is_Already_Held()
+    {
+        var user = Grantee();
+        var superAdmin = SystemRole(RoleCodes.SuperAdmin, "Super Admin", "Everything.");
+
+        user.Grant(superAdmin.Id, null, null, Now);
+
+        var plan = SeedPlanner.PlanGrant(
+            GranteeEmail, user, superAdmin, superAdminUnavailable: false);
+
+        Assert.Equal(GrantOutcome.AlreadyHeld, plan.Outcome);
+        Assert.Null(plan.ToCreate);
+    }
+
+    [Fact]
+    public void Branch_Scoped_Grant_Does_Not_Count_As_Already_Held()
+    {
+        var user = Grantee();
+        var superAdmin = SystemRole(RoleCodes.SuperAdmin, "Super Admin", "Everything.");
+
+        user.Grant(superAdmin.Id, Guid.CreateVersion7(), null, Now);
+
+        var plan = SeedPlanner.PlanGrant(
+            GranteeEmail, user, superAdmin, superAdminUnavailable: false);
+
+        Assert.Equal(GrantOutcome.Granted, plan.Outcome);
+        Assert.Same(user, plan.ToCreate!.User);
+        Assert.Equal(RoleCodes.SuperAdmin, plan.ToCreate.RoleCode);
+    }
+
+    [Fact]
+    public void Revoked_Grant_Does_Not_Block_Regranting()
+    {
+        var user = Grantee();
+        var superAdmin = SystemRole(RoleCodes.SuperAdmin, "Super Admin", "Everything.");
+
+        var granted = user.Grant(superAdmin.Id, null, null, Now);
+        user.RevokeGrant(granted.Id, Guid.CreateVersion7(), "Revoked for testing.", Now);
+
+        var plan = SeedPlanner.PlanGrant(
+            GranteeEmail, user, superAdmin, superAdminUnavailable: false);
+
+        Assert.Equal(GrantOutcome.Granted, plan.Outcome);
+        Assert.Same(user, plan.ToCreate!.User);
+    }
+
+    [Fact]
+    public void Planning_Does_Not_Grant()
+    {
+        var user = Grantee();
+        var superAdmin = SystemRole(RoleCodes.SuperAdmin, "Super Admin", "Everything.");
+
+        var plan = SeedPlanner.PlanGrant(
+            GranteeEmail, user, superAdmin, superAdminUnavailable: false);
+
+        Assert.Equal(GrantOutcome.Granted, plan.Outcome);
+        Assert.Same(user, plan.ToCreate!.User);
+
+        // UpdatedAt staying null is a legitimate assertion for a user, unlike the role
+        // equivalent above: Grant does not call Touch, where Reconcile does unconditionally.
+        Assert.Empty(user.UserRoles);
+        Assert.Null(user.UpdatedAt);
+    }
+
 }
+

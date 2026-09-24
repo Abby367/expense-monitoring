@@ -173,6 +173,31 @@ internal static class SeedPlanner
 
         return new RolePlan(toCreate, toSync, skippedRemoved, unmanaged, conflicts, unchanged);
     }
+    internal static GrantPlan PlanGrant(
+        string? superAdminEmail,
+        User? user,
+        Role? liveSuperAdminRole,
+        bool superAdminUnavailable)
+    {
+        if (string.IsNullOrWhiteSpace(superAdminEmail))
+            return new GrantPlan(null, GrantOutcome.NotRequested);
+
+        if (superAdminUnavailable)
+            return new GrantPlan(null, GrantOutcome.RoleUnavailable);
+
+        if (user is null)
+            return new GrantPlan(null, GrantOutcome.UserNotFound);
+
+        // The null check on liveSuperAdminRole is load-bearing on an invariant declared in
+        // another file: Role.Remove calls EnsureNotSystem, so SUPERADMIN can never be
+        // soft-removed and re-created under a new id. If that ever changes, a second live
+        // org-wide grant becomes possible and the filtered unique index would permit it.
+        if (liveSuperAdminRole is not null && user.UserRoles.Any(grant =>
+                !grant.IsRemoved && grant.IsOrgWide && grant.RoleId == liveSuperAdminRole.Id))
+            return new GrantPlan(null, GrantOutcome.AlreadyHeld);
+
+        return new GrantPlan(new GrantCreate(user, RoleCodes.SuperAdmin), GrantOutcome.Granted);
+    }
 
     private static bool SystemRoleDiffers(
         Role role,
@@ -222,3 +247,17 @@ internal sealed record RoleCreate(string Code, SystemRoleDefinitions.Definition 
 
 
 internal sealed record RoleSync(Role Existing, SystemRoleDefinitions.Definition Desired);
+
+internal sealed record GrantPlan(GrantCreate? ToCreate, GrantOutcome Outcome);
+
+internal sealed record GrantCreate(User User, string RoleCode);
+
+internal enum GrantOutcome
+{
+    NotRequested = 1,
+    UserNotFound = 2,
+    RoleUnavailable = 3,
+    AlreadyHeld = 4,
+    Granted = 5
+}
+

@@ -1,10 +1,14 @@
 namespace SAFC.Expense.Application.Utilities.SeedDefaults;
 
 public sealed record SeedDefaultsResponse(
-    bool Applied,                       
+    bool Applied,
     PermissionSeedResult Permissions,
     BranchSeedResult Branches,
-    RoleSeedResult Roles);
+    RoleSeedResult Roles,
+    GrantSeedResult SuperAdminGrant);
+
+public sealed record GrantSeedResult(string Outcome, string? Email);
+
 
 
 public sealed record PermissionSeedResult(
