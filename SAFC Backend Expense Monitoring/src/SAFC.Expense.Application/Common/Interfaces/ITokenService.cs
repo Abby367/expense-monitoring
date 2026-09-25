@@ -8,7 +8,9 @@ public sealed record RefreshTokenPair(string RawValue, string Hash, DateTimeOffs
 
 public interface ITokenService
 {
-    AccessToken CreateAccessToken(User user, IReadOnlyCollection<string> permissionClaims);
+
+    AccessToken CreateAccessToken(User user);
+
 
     RefreshTokenPair CreateRefreshToken();
 
