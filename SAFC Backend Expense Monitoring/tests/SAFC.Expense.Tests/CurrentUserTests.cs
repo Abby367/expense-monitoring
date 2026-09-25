@@ -39,7 +39,7 @@ public class CurrentUserTests
         // Arrange
         var id = Guid.CreateVersion7();
         var identity = new ClaimsIdentity(
-            [new Claim(ClaimTypes.NameIdentifier, id.ToString())],
+            [SafcClaims.ForUserId(id)],
             authenticationType: "Test");
 
         var accessor = new HttpContextAccessor
@@ -56,4 +56,56 @@ public class CurrentUserTests
         Assert.Equal(id, currentUser.UserId);
         Assert.True(currentUser.IsAuthenticated);
     }
+    [Fact]
+    public void Two_User_Id_Claims_Read_As_Null()
+    {
+        // Arrange — something attached a second identity. FindFirst would silently pick a
+        // winner; exactly-one fails closed instead.
+        var identity = new ClaimsIdentity(
+            [
+                SafcClaims.ForUserId(Guid.CreateVersion7()),
+                SafcClaims.ForUserId(Guid.CreateVersion7())
+            ],
+            authenticationType: "Test");
+
+        var accessor = new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(identity)
+            }
+        };
+
+        var currentUser = new CurrentUser(accessor);
+
+        // Assert
+        Assert.Null(currentUser.UserId);
+
+        // Still authenticated — an ambiguous identity is not an anonymous one.
+        Assert.True(currentUser.IsAuthenticated);
+    }
+
+    [Fact]
+    public void An_Empty_Guid_Reads_As_Null()
+    {
+        // Arrange
+        var identity = new ClaimsIdentity(
+            [SafcClaims.ForUserId(Guid.Empty)],
+            authenticationType: "Test");
+
+        var accessor = new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(identity)
+            }
+        };
+
+        var currentUser = new CurrentUser(accessor);
+
+        // Assert — Guid.Empty would fail safely at the permission check, but only after being
+        // written into CreatedByUserId. Reject it where it is read.
+        Assert.Null(currentUser.UserId);
+    }
+
 }
