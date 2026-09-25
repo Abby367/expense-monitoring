@@ -44,7 +44,7 @@ public sealed class UserAuthorizationProviderTests(IntegrationDatabase database)
         var user = User.CreateByAdminWithMicrosoft("probe@safc.com.ph", "Probe", Actor, Now);
 
         if (status is UserStatus.Active or UserStatus.Suspended)
-            user.Activate(Now);
+            user.ActivateByAdmin(Now);
 
         if (status is UserStatus.Suspended)
             user.Suspend(Now);
