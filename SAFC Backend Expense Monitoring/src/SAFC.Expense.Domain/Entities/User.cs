@@ -38,6 +38,8 @@ public sealed class User
 
     public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 
+    public static string NormalizeMicrosoftId(string id) => id.Trim().ToLowerInvariant();
+
     private User() { }
 
     private User(string email, string fullName,
@@ -104,13 +106,59 @@ public sealed class User
         Touch(now);
     }
 
-    public void Activate(DateTimeOffset now)
+    /// <summary>
+    /// Admin action only. Sign-in must not call this — see RecordMicrosoftSignIn.
+    /// </summary>
+    public void ActivateByAdmin(DateTimeOffset now)
     {
         EnsureNotRemoved();
 
         Status = UserStatus.Active;
         Touch(now);
     }
+
+    /// <summary>
+    /// Records a successful Microsoft sign-in. Returns true when this sign-in changed the row,
+    /// which is true only on the first one.
+    /// </summary>
+    public bool RecordMicrosoftSignIn(string microsoftObjectId, DateTimeOffset now)
+    {
+        EnsureNotRemoved();
+        ArgumentException.ThrowIfNullOrWhiteSpace(microsoftObjectId);
+
+        var incoming = NormalizeMicrosoftId(microsoftObjectId);
+        var changed = false;
+
+        if (MicrosoftId is null)
+        {
+            MicrosoftId = incoming;
+            changed = true;
+        }
+        else if (MicrosoftId != incoming)
+        {
+            throw new InvalidOperationException(
+                "This account is already linked to a different Microsoft identity.");
+        }
+
+        if (FirstLoggedInAt is null)
+        {
+            FirstLoggedInAt = now;
+            changed = true;
+        }
+
+        // Invited -> Active only. A suspended account stays suspended: signing in must never
+        // undo an admin's deliberate lockout. ActivateByAdmin is the only door for that.
+        if (Status == UserStatus.Invited)
+        {
+            Status = UserStatus.Active;
+            changed = true;
+        }
+
+        if (changed)
+            Touch(now);
+        return changed;
+    }
+
 
     public void Suspend(DateTimeOffset now)
     {
@@ -162,7 +210,7 @@ public sealed class User
     {
         EnsureNotRemoved();
 
-        
+
         var alreadyHeld = _userRoles.Any(grant =>
             !grant.IsRemoved && grant.RoleId == roleId && grant.BranchId == branchId);
 
