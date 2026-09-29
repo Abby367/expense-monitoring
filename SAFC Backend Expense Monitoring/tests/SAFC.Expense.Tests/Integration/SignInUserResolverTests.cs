@@ -119,4 +119,55 @@ public sealed class SignInUserResolverTests(IntegrationDatabase database)
             Assert.Null(id);
         });
     }
+    [Fact]
+    public async Task A_Non_SAFC_Email_Still_Resolves()
+    {
+        await RunAsync(async (context, resolver) =>
+        {
+            const string external = "contractor@example.com";
+
+            var user = User.CreateByAdminWithMicrosoft(external, "Contractor", Actor, Now);
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+
+            var id = await resolver.ResolveAsync(Oid, external, CancellationToken.None);
+
+            Assert.Equal(user.Id, id);
+        });
+    }
+    [Fact]
+    public async Task A_Removed_User_With_A_Pinned_Oid_Cannot_Sign_In()
+    {
+        await RunAsync(async (context, resolver) =>
+        {
+            var user = User.CreateByAdminWithMicrosoft(Email, "Probe", Actor, Now);
+            user.RecordMicrosoftSignIn(Oid, Now);
+            user.Remove(Actor, "Left the company.", Now);
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+
+            var id = await resolver.ResolveAsync(Oid, email: null, CancellationToken.None);
+
+            Assert.Null(id);
+        });
+    }
+
+    [Fact]
+    public async Task The_Oid_Is_Matched_Case_Insensitively()
+    {
+        await RunAsync(async (context, resolver) =>
+        {
+            var user = User.CreateByAdminWithMicrosoft(Email, "Probe", Actor, Now);
+            user.RecordMicrosoftSignIn(Oid, Now);
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+
+            var id = await resolver.ResolveAsync(
+                Oid.ToUpperInvariant(), email: null, CancellationToken.None);
+
+            Assert.Equal(user.Id, id);
+        });
+    }
+
+
 }

@@ -7,7 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 DotNetEnv.Env.Load();
 builder.Configuration.AddEnvironmentVariables();
 
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
+
 builder.Services.AddApplication();
 builder.Services.Configure<UtilitiesOptions>(
 builder.Configuration.GetSection(UtilitiesOptions.SectionName));
