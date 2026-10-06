@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SAFC.Expense.Application.Common.Interfaces;
-
+using Microsoft.AspNetCore.Authorization;
 namespace SAFC.Expense.Api.Controllers;
 
 [ApiController]
@@ -25,4 +25,8 @@ public sealed class HealthController(IExpenseDbContext context) : ControllerBase
             return StatusCode(503, new { status = "unhealthy", database = "unreachable", timestamp = DateTimeOffset.UtcNow });
         }
     }
+    [Authorize]
+    [HttpGet("auth")]
+    public IActionResult GetAuth()
+        => Ok(new { status = "authenticated" });
 }
