@@ -5,6 +5,7 @@ using SAFC.Expense.Api.Middlewares;
 using SAFC.Expense.Api.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
+using SAFC.Expense.Api.Swagger;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,7 +41,6 @@ builder.Services.AddProblemDetails();
 
 
 builder.Services.AddEndpointsApiExplorer();
-var apiScope = $"api://{clientId}/access_as_user";
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -50,24 +50,19 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
         Description = "Expense request, approval, and liquidation endpoints."
     });
-    options.AddSecurityDefinition("Microsoft", new OpenApiSecurityScheme
-{
-    Type = SecuritySchemeType.OAuth2,
-    Flows = new OpenApiOAuthFlows
+        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        AuthorizationCode = new OpenApiOAuthFlow
-        {
-            AuthorizationUrl = new Uri(
-                "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"),
-            TokenUrl = new Uri(
-                "https://login.microsoftonline.com/common/oauth2/v2.0/token"),
-            Scopes = new Dictionary<string, string>
-            {
-                [apiScope] = "Access Expense API"
-            }
-        }
-    }
-});
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Paste the access token only — Swagger adds the Bearer prefix."
+    });
+
+    options.OperationFilter<BearerSecurityOperationFilter>();
+
+
 });
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -93,12 +88,6 @@ if (app.Environment.IsDevelopment())
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "SAFC Expense API v1");
         options.DocumentTitle = "SAFC Expense Monitoring API";
-        options.OAuthClientId(builder.Configuration["Swagger:ClientId"]);
-        options.OAuthAppName("Expense Swagger");
-        options.OAuthUsePkce();
-        options.OAuthScopes(apiScope);
-        options.OAuth2RedirectUrl(
-            "https://localhost:7219/swagger/oauth2-redirect.html");
     });
 }
 
